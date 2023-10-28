@@ -1,0 +1,274 @@
+---
+title: "Assigment 1"
+author: "Francesco Freni"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(sna)
+library(network)
+library(xtable)
+library(ergm)
+library(igraph)
+library(tidyverse)
+```
+
+## Task 1
+(1)
+```{r}
+load('friend_net.Rda')
+set.seed(1234) 
+permutations <- 1000 
+
+adjMatrix <- as.matrix(friend_net)
+gender <- get.vertex.attribute(friend_net, 'sex')
+sameGender <- outer(gender, gender, "==") * 1
+rownames(sameGender) <- 1:nrow(adjMatrix)
+rownames(sameGender) <- 1:ncol(adjMatrix)
+
+fit1 <- netlogit(adjMatrix, sameGender, reps = permutations, nullhyp = "qapx")
+# In this case qapy is equivalent to qapx, because we have only one covariate
+summary(fit1)
+```
+
+(2)
+```{r}
+n <- nrow(attributes)
+# Boys are more likely to send friendship nominations than girls
+genderSender <- matrix(gender, n, n, byrow = FALSE)
+# Smokers are more likely to receive friendship nominations than non-smokers.
+smoke <- attributes$smoke
+smokeReceiver <- matrix(smoke, n, n, byrow = TRUE)
+# A friendship nomination is more likely between a pair of students pariticipating in
+# the same activity
+activity <- attributes$activity
+sameActivity <- outer(activity, activity, "==") * 1
+
+zm <- list(
+  sameGender = sameGender,
+  genderSender = genderSender,
+  smokeReceiver = smokeReceiver,
+  sameActivity = sameActivity
+)
+```
+
+(3)
+```{r}
+set.seed(1234)
+fit2 <- netlogit(adjMatrix, zm, reps = permutations, nullhyp = "qapspp")
+fit2$names <- c('Intercept', 'sameGender', 'genderSender', 'smokeReceiver',
+                'sameActivity')
+summary(fit2)
+```
+
+All the parameters, except \texttt{genderSender} and \texttt{smokeReceiver} are significantly different from 0 at a significance level $\alpha = 0.05$. Thus, we do not have evidence to reject Hypothesis 2, so we do not have evidence to state that boys are more likely to send friendship nominations than girls. Also, we do not have empirical evidence that smokers are more likely to receiver friendship nominations than non-smokers.
+On the other hand, the other parameters are significant. In particular, the odds of having a link between students of the same gender are increased by a factor $18.34$, holding all the other variables constant. Moreover, the odds of having a link between students participating in the same extracurricular activity are $1.74$ times grater than the odds of a link between students not taking part in the same activities.
+
+
+(4)
+We can test the Hypothesis whether chess players are less likely to receive friendship nominations than non chess players.
+```{r}
+plays_chess <- ifelse(attributes$activity == 2, 1, 0)
+chessReceiver <- matrix(plays_chess, n, n, byrow = TRUE)
+```
+
+
+(5)
+```{r}
+zm <- list(
+  sameGender = sameGender,
+  genderSender = genderSender,
+  smokeReceiver = smokeReceiver,
+  sameActivity = sameActivity,
+  chessReceiver = chessReceiver
+)
+fit3 <- netlogit(adjMatrix, zm, reps = permutations, nullhyp = "qapspp")
+fit3$names <- c('Intercept', 'sameGender', 'genderSender', 'smokeReceiver',
+                'sameActivity', 'chessReceiver')
+summary(fit3)
+```
+
+The coefficient is not significantly different from $0$, so we do not have evidence to say that chess players are less likely to be nominated as friends.
+
+
+## Task 2
+(1)
+```{r}
+#' Simulate the next step of a network in Markov chain using Metropolis-Hasting
+#' 
+#' The function `MHstep` simulates the the Metropolis-Hastings step that defines
+#' the Markov chain whose stationary distribution is the ERGM with 
+#' edge, mutual and nodematch statistics
+#'
+#' @param net an object of class `matrix`. Adjacency matrix of the network.
+#' @param nodeAttr a character or numeric vector. The node attribute. 
+#' @param theta1 a numeric value. The value of the edge parameter of the ERGM.
+#' @param theta2 a numeric value. The value of the mutual parameter of the ERGM.
+#' @param theta3 a numeric value. The value of the nodematch parameter of the ERGM.
+#'
+#' @return next state of the Markov Chain
+#'
+#' @examples
+#' MHstep(
+#'   matrix(c(0, 1, 0, 0, 0, 0, 1, 1, 0), nrow = 3, ncol = 3),
+#'   c("v", "g", "g"),
+#'   -log(0.5), log(0.4), log(.8)
+#' )
+MHstep <- function(net, nodeAttr, theta1, theta2, theta3){
+  
+  # Number of vertices in the network
+  nvertices <- nrow(net) 
+  
+  # Choose randomly two vertices, prevent loops {i,i} with replace = FALSE
+  tie <- sample(1:nvertices, 2, replace = FALSE) 
+  i <- tie[1]
+  j <- tie[2]
+  
+  # Compute the change statistics
+  # Number of edges
+  delta_1 = 1 - 2*net[i,j]
+  
+  # Reciprocal dyads
+  delta_2 = net[j,i] - 2 * net[i,j] * net[j,i]
+  # if (net[j,i] == 1 & net[i,j] == 1) delta_2 = -1
+  # if (net[i,j] == 0 & net[j,i] == 1) delta_2 = 1
+  # if (net[i,j] == 0 & net[j,i] == 0) delta_2 = 0
+  
+  # Homophily dyads
+  sameAttr <- (nodeAttr[i] == nodeAttr[j]) * 1
+  delta_3 = (1 - 2*net[i,j])*sameAttr
+  
+  # Compute the probability of the next state 
+  # according to the Metropolis-Hastings algorithm
+  p <- min(1, exp(theta1 * delta_1 + theta2 * delta_2 + theta3 * delta_3))
+  
+  # Select the next state: 
+  ret <- rbinom(1, size=1, prob=p)
+  if (ret == 1) {
+    net[i,j] <- 1 - net[i,j]
+  } 
+  
+  # Return the next state of the chain
+  return(net)
+}
+
+# Markov Chain simulation -------------------------------------------------
+#' The function MarkovChain simulates the networks from the ERGM with 
+#' edge, mutual and nodematch statistics
+#'
+#' @param net an object of class `matrix`. Adjacency matrix of the network.
+#' @param nodeAttr a character or numeric vector. The node attribute. 
+#' @param theta1 a numeric value. The value of the edge parameter of the ERGM.
+#' @param theta2 a numeric value. The value of the mutual parameter of the ERGM.
+#' @param theta3 a numeric value. The value of the nodematch parameter of the ERGM.
+#' @param burnin an integer value.
+#'   Number of steps to reach the stationary distribution.
+#' @param thinning an integer value. Number of steps between simulated networks.
+#' @param nNet an integer value. Number of simulated networks to return as output.
+#'
+#' @return a named list:
+#'   - netSim: an `array` with the adjancency matrices of the simulated networks.
+#'   - statSim: a `matrix` with the value of the statistic defining the ERGM.
+#'
+#' @examples
+#' MarkovChain(
+#'   matrix(c(0, 1, 0, 0, 0, 0, 1, 1, 0), nrow = 3, ncol = 3),
+#'   c("v", "g", "g"),
+#'   -log(0.5), log(0.4), log(.8)
+#' )
+MarkovChain <- function(net, nodeAttr, theta1, theta2, theta3,
+                        burnin = 10000, thinning = 1000, nNet = 1000){
+  
+  # Burnin phase: repeating the steps of the chain "burnin" times  
+  nvertices <- nrow(net)
+  burninStep <- 1 # counter for the number of burnin steps
+  
+  # Perform the burnin steps
+  while (burninStep <= burnin) {
+    net <- MHstep(net, nodeAttr, theta1, theta2, theta3)
+    burninStep <- burninStep + 1
+  }
+  
+  # After the burnin phase we draw the networks
+  # The simulated networks and statistics are stored in the objects
+  # netSim and statSim
+  netSim <- array(0, dim = c(nvertices, nvertices, nNet))
+  statSim <- matrix(0, nNet, 3)
+  thinningSteps <- 0 # counter for the number of thinning steps
+  netCounter <- 1 # counter for the number of simulated network
+  
+  while (netCounter <= nNet) {
+    thinningSteps <- 0
+    while (thinningSteps < thinning) {
+      net <- MHstep(net, nodeAttr, theta1, theta2, theta3)
+      thinningSteps <- thinningSteps + 1
+    }
+    netSim[,,netCounter] <- net
+    edges <- sum(net)
+    mutual <- 1/2 * sum(diag(net %*% net))
+    homophily <- sum(net * outer(nodeAttr, nodeAttr, '=='))
+    statSim[netCounter,] <- c(edges, mutual, homophily)
+    netCounter <- netCounter + 1
+  }
+  
+  # Return the simulated networks and the statistics
+  return(list(netSim = netSim, statSim = statSim))
+}
+```
+
+(2)
+(i)
+```{r}
+theta1 <- -2.76; theta2 <- 0.68; theta3 <- 1.21
+ret <- MarkovChain(adjMatrix, gender, theta1, theta2, theta3)
+```
+
+(ii)
+```{r}
+ret$statSim %>% colMeans
+edges <- sum(adjMatrix)
+mutual <- 1/2 * sum(diag(adjMatrix %*% adjMatrix))
+homophily <- sum(adjMatrix * outer(gender, gender, '=='))
+c(edges, mutual, homophily)
+```
+The statistics are not so different, so the parameters ,might be adequate.
+
+(3)
+```{r}
+theta1.1 <- -3.8; theta2.1 <- 1.7; theta3.1 <- 2.2
+ret.1 <- MarkovChain(adjMatrix, gender, theta1.1, theta2.1, theta3.1)
+ret.1$statSim %>% colMeans
+```
+
+
+## Task 3
+(1)
+```{r}
+fit.ergm <- ergm(friend_net ~ edges + nodematch('sex'))
+summary(fit.ergm)
+```
+
+```{r}
+theta1 <- coef(fit.ergm)[1]
+theta2 <- coef(fit.ergm)[2]
+exp(theta1 + theta2)/(1 + exp(theta1 + theta2))
+```
+
+(2)
+For (i) we should add the number of mutual edges, for (ii) the number 
+
+
+(3)
+```{r}
+fit.ergm2 <- ergm(friend_net ~ edges + mutual + nodematch('sex') + transitive +
+                    sender + receiver)
+summary(fit.ergm2)
+```
+
+(4)
+```{r}
+
+```
+
