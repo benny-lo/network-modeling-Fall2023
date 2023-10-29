@@ -11,7 +11,6 @@ library(sna)
 library(network)
 library(xtable)
 library(ergm)
-library(igraph)
 library(tidyverse)
 ```
 
@@ -23,7 +22,7 @@ set.seed(1234)
 permutations <- 1000 
 
 adjMatrix <- as.matrix(friend_net)
-gender <- get.vertex.attribute(friend_net, 'sex')
+gender <- network::get.vertex.attribute(friend_net, 'sex')
 sameGender <- outer(gender, gender, "==") * 1
 rownames(sameGender) <- 1:nrow(adjMatrix)
 rownames(sameGender) <- 1:ncol(adjMatrix)
@@ -246,6 +245,7 @@ ret.1$statSim %>% colMeans
 ## Task 3
 (1)
 ```{r}
+set.seed(1234)
 fit.ergm <- ergm(friend_net ~ edges + nodematch('sex'))
 summary(fit.ergm)
 ```
@@ -257,18 +257,77 @@ exp(theta1 + theta2)/(1 + exp(theta1 + theta2))
 ```
 
 (2)
-For (i) we should add the number of mutual edges, for (ii) the number 
+For (i) we should add the number of mutual edges, for (ii) the number of transitive two-path, considering decreasing weight of triangles to avoid near-degeneracy, for (iii) 
 
 
 (3)
 ```{r}
-fit.ergm2 <- ergm(friend_net ~ edges + mutual + nodematch('sex') + transitive +
-                    sender + receiver)
+set.seed(1234)
+fit.ergm2 <- ergm(friend_net ~ edges + mutual + nodematch('sex') + 
+                    gwesp(decay = 0.3, fixed = TRUE) + 
+                    gwodegree(decay = 0.3, fixed = TRUE) +
+                    gwidegree(decay = 0.3, fixed = TRUE))
 summary(fit.ergm2)
 ```
+```{r}
+mcmc.diagnostics(fit.ergm2)
+plot(fit.ergm2$sample)
+```
+
 
 (4)
 ```{r}
+gof.fit.ergm2 <- gof(fit.ergm2)
+plot(gof.fit.ergm2)
+```
 
+```{r}
+observed <- summary(friend_net ~ edges + mutual + nodematch('sex') + 
+                    gwesp(decay = 0.3, fixed = TRUE) + 
+                    gwodegree(decay = 0.3, fixed = TRUE) +
+                    gwidegree(decay = 0.3, fixed = TRUE))
+
+newcoef <- coef(fit.ergm2)
+simNetsStat <- simulate(friend_net ~ edges + mutual + nodematch('sex') + 
+                    gwesp(decay = 0.3, fixed = TRUE) + 
+                    gwodegree(decay = 0.3, fixed = TRUE) +
+                    gwidegree(decay = 0.3, fixed = TRUE),
+                    nsim = 1000,
+                    coef = newcoef, output = "stats"
+                    )
+expected <- apply(simNetsStat, 2, mean)
+observed
+expected
+```
+
+
+(5)
+...
+
+
+## Task 4 
+(1)
+```{r}
+set.seed(1234)
+control.ergm(main.method = 'Stochastic-Approximation')
+friend_net %v% 'smoke' <- attributes$smoke
+friend_net %v% 'activity' <- attributes$activity
+fit.ergm3 <- ergm(friend_net ~ edges + mutual + nodematch('sex') + 
+                    gwesp(decay = 0.3, fixed = TRUE) + 
+                    gwodegree(decay = 0.3, fixed = TRUE) +
+                    gwidegree(decay = 0.3, fixed = TRUE) +
+                    nodeofactor('sex') + 
+                    nodeifactor('smoke') +
+                    nodematch('activity'))
+summary(fit.ergm3)
+```
+
+```{r}
+set.seed(1234)
+fit.ergm3 <- ergm(friend_net ~ nodematch('sex') + 
+                    nodeofactor('sex') + 
+                    nodeifactor('smoke') +
+                    nodematch('activity'))
+summary(fit.ergm3)
 ```
 
