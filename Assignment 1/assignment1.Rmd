@@ -309,7 +309,6 @@ expected
 (1)
 ```{r}
 set.seed(1234)
-control.ergm(main.method = 'Stochastic-Approximation')
 friend_net %v% 'smoke' <- attributes$smoke
 friend_net %v% 'activity' <- attributes$activity
 fit.ergm3 <- ergm(friend_net ~ edges + mutual + nodematch('sex') + 
@@ -318,7 +317,8 @@ fit.ergm3 <- ergm(friend_net ~ edges + mutual + nodematch('sex') +
                     gwidegree(decay = 0.3, fixed = TRUE) +
                     nodeofactor('sex') + 
                     nodeifactor('smoke') +
-                    nodematch('activity'))
+                    nodematch('activity'),
+                  control=control.ergm(main.method='Stochastic-Approximation'))
 summary(fit.ergm3)
 ```
 
@@ -329,5 +329,10 @@ fit.ergm3 <- ergm(friend_net ~ nodematch('sex') +
                     nodeifactor('smoke') +
                     nodematch('activity'))
 summary(fit.ergm3)
+```
+
+
+```{r}
+summary(ergm(friend_net ~ edges + nodematch('sex')))
 ```
 
