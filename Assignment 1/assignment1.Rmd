@@ -2,7 +2,11 @@
 title: "Assigment 1"
 author: "Francesco Freni"
 date: "`r Sys.Date()`"
-output: pdf_document
+output:
+  pdf_document: default
+header-includes: 
+  - \usepackage{tikz}
+  - \usetikzlibrary{shapes,positioning}
 ---
 
 ```{r setup, include=FALSE}
@@ -12,12 +16,61 @@ library(network)
 library(xtable)
 library(ergm)
 library(tidyverse)
+library(ggraph)
 ```
+
+```{r, warning=FALSE}
+load('friend_net.Rda')
+friend_net %v% 'smoke' <- attributes$smoke
+friend_net %v% 'activity' <- attributes$activity
+
+ggraph(friend_net) +
+  geom_edge_link0(
+    arrow = arrow(
+      angle = 10,
+      length = unit(4, "mm"),
+      type = "closed"
+    )
+  ) +
+  geom_node_point(
+    aes(
+      shape = as.factor(smoke),
+      fill = as.factor(sex),
+      size = as.factor(activity)
+    ),
+    colour = "black"
+  ) +
+  scale_fill_discrete(
+    name = "Gender",
+    labels = c(
+      "0" = "Female",
+      "1" = "Male"
+    )
+  ) +
+  guides(fill = guide_legend(
+    override.aes = list(shape = 21),
+    labels = c(
+      "0" = "Female",
+      "1" = "Male"
+    )
+  )) +
+  scale_shape_manual(
+    name = "Smoke",
+    values = c("0" = 21, "1" = 22),
+    labels = c("0" = "Non-Smoker", "1" = "Smoker")
+  ) +
+  scale_size_manual(
+    name = "Activity",
+    values = c("1" = 3, "2" = 7, "3" = 11),
+    labels = c("1" = "Hockey", "2" = "Chess", "3" = "Football")
+  )
+
+```
+
 
 ## Task 1
 (1)
 ```{r}
-load('friend_net.Rda')
 set.seed(1234) 
 permutations <- 1000 
 
@@ -28,9 +81,11 @@ rownames(sameGender) <- 1:nrow(adjMatrix)
 rownames(sameGender) <- 1:ncol(adjMatrix)
 
 fit1 <- netlogit(adjMatrix, sameGender, reps = permutations, nullhyp = "qapx")
+fit1$names <- c('Intercept', 'sameGender')
 # In this case qapy is equivalent to qapx, because we have only one covariate
 summary(fit1)
 ```
+The coefficient for \texttt{sameGender} is significantly different from 0. This is coherent with the plot, where we can see clusters according to the gender.
 
 (2)
 For the first hypothesis, we have to look to the out-degree of boys. Hence, we created a matrix in which an element equals 1 if the sender is a boy, 0 otherwise. 
@@ -337,8 +392,6 @@ The negative value for the edge parameter is coherent to what we expect for soci
 (1)
 ```{r}
 set.seed(1234)
-friend_net %v% 'smoke' <- attributes$smoke
-friend_net %v% 'activity' <- attributes$activity
 fit.ergm3 <- ergm(friend_net ~ edges + mutual + nodematch('sex') + 
                     gwesp(decay = 0.3, fixed = TRUE) + 
                     gwodegree(decay = 0.3, fixed = TRUE) +
@@ -358,7 +411,7 @@ fit.ergm3 <- ergm(friend_net ~ edges + nodematch('sex') +
                     nodematch('activity'))
 summary(fit.ergm3)
 ```
-Without the structural terms, the \texttt{ergm} function uses MPLE, so the estimates are the same as in Task 1, but the p-values are different. In particular, now we only reject the hypothesis that smokers are more likely to receive friendship nominations than non-smokers. 
+Without the structural terms, the \texttt{ergm} function uses MPLE, so the estimates are the same as in Task 1 (if we also include the edge parameter), but the p-values are different. In particular, now we only reject the hypothesis that smokers are more likely to receive friendship nominations than non-smokers. 
 
 On the other hand, if we add the structural terms, we get different estimates. In particular, the out-degree and in-degree distribution of the whole network can adequately explain the observed network, so \texttt{nodeofactor.sex.1} and \texttt{nodeifactor.smoke.1} are not significant. Specifically, the impact of the out-degree is not specific to the boys and the impact of the in-degree is not specific to smokers.
 
@@ -369,3 +422,11 @@ We can test whether football players reciprocate friendship nominations they get
 \sum_{i,j} x_{ij}\cdot (1-x_{ji})\cdot \mathbb{I}(v_i==2)\cdot \mathbb{I}(v_j == 3),
 \end{align*}
 where $\mathbb{I}$ is the indicator function.
+
+\tikzset{ell/.style={ellipse,draw,minimum height=0.65cm,minimum width=1cm,inner sep=0.25cm}}
+
+\begin{tikzpicture}[>=stealth]
+\node[ell] (e1)at (0,0) {\color{blue}$Chess Player$};
+\node[ell] (e2)at (0,2) {\color{blue}$Football Player$};
+\draw [->] (e1) to []node[right]{} (e2);
+\end{tikzpicture}
