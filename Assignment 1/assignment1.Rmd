@@ -33,6 +33,11 @@ summary(fit1)
 ```
 
 (2)
+For the first hypothesis, we have to look to the out-degree of boys. Hence, we created a matrix in which an element equals 1 if the sender is a boy, 0 otherwise. 
+
+For the second hypothesis, we have to look to the in-degree of smokers. Hence, we created a matrix in which an element equals 1 if the receiver is a smoker, 0 otherwise. 
+
+For the third hypothesis, we have to look for homophily with respect to the activity. Hence, we created a matrix in which an element equals 1 if the sender and the receiver take part in the same activity, 0 otherwise.
 ```{r}
 n <- nrow(attributes)
 # Boys are more likely to send friendship nominations than girls
@@ -62,12 +67,13 @@ fit2$names <- c('Intercept', 'sameGender', 'genderSender', 'smokeReceiver',
 summary(fit2)
 ```
 
-All the parameters, except \texttt{genderSender} and \texttt{smokeReceiver} are significantly different from 0 at a significance level $\alpha = 0.05$. Thus, we do not have evidence to reject Hypothesis 2, so we do not have evidence to state that boys are more likely to send friendship nominations than girls. Also, we do not have empirical evidence that smokers are more likely to receiver friendship nominations than non-smokers.
-On the other hand, the other parameters are significant. In particular, the odds of having a link between students of the same gender are increased by a factor $18.34$, holding all the other variables constant. Moreover, the odds of having a link between students participating in the same extracurricular activity are $1.74$ times grater than the odds of a link between students not taking part in the same activities.
+All the parameters, except \texttt{genderSender} and \texttt{smokeReceiver} are significantly different from 0 at a significance level $\alpha = 0.05$. Thus, we do not have evidence to reject hypothesis 1, so we do not have evidence to state that boys are more likely to send friendship nominations than girls. Also, we do not have empirical evidence that smokers are more likely to receive friendship nominations than non-smokers.
+
+On the other hand, the other parameters are significant. In particular, the odds of having a link between students of the same gender are increased by a factor of $18.34$, holding all the other variables constant. Moreover, the odds of having a link between students participating in the same extracurricular activity are $1.74$ times grater than the odds of a link between students not taking part in the same activity.
 
 
 (4)
-We can test the Hypothesis whether chess players are less likely to receive friendship nominations than non chess players.
+We can test the hypothesis whether chess players are less likely to receive friendship nominations than non chess players. For this reason, we created a matrix in which an element equals 1 if the receiver plays chess, 0 otherwise.
 ```{r}
 plays_chess <- ifelse(attributes$activity == 2, 1, 0)
 chessReceiver <- matrix(plays_chess, n, n, byrow = TRUE)
@@ -89,7 +95,7 @@ fit3$names <- c('Intercept', 'sameGender', 'genderSender', 'smokeReceiver',
 summary(fit3)
 ```
 
-The coefficient is not significantly different from $0$, so we do not have evidence to say that chess players are less likely to be nominated as friends.
+The coefficient is not significantly different from $0$ (p-value $0.261$), so we do not have evidence to say that chess players are less likely to be nominated as friends.
 
 
 ## Task 2
@@ -198,7 +204,8 @@ MarkovChain <- function(net, nodeAttr, theta1, theta2, theta3,
   thinningSteps <- 0 # counter for the number of thinning steps
   netCounter <- 1 # counter for the number of simulated network
   
-  while (netCounter <= nNet) {
+  netSim[,,netCounter] <- net
+  while (netCounter < nNet) {
     thinningSteps <- 0
     while (thinningSteps < thinning) {
       net <- MHstep(net, nodeAttr, theta1, theta2, theta3)
@@ -227,16 +234,18 @@ ret <- MarkovChain(adjMatrix, gender, theta1, theta2, theta3)
 (ii)
 ```{r}
 ret$statSim %>% colMeans
+apply(ret$statSim, 2, sd)
 edges <- sum(adjMatrix)
 mutual <- 1/2 * sum(diag(adjMatrix %*% adjMatrix))
 homophily <- sum(adjMatrix * outer(gender, gender, '=='))
 c(edges, mutual, homophily)
 ```
-The statistics are not so different, so the parameters ,might be adequate.
+The observed number of mutual edges is two standard deviations away from the mean of the number of mutual edges in the simulated networks. Similar arguments can be done for the homophily term. Therefore, the given parameters are not appropriate.
 
 (3)
+Considering the results from the previous point, we should increase the value of the second parameter, because we want more mutual edges in our simulated networks. Similarly, the third value should be increased as well. By increasing the second and third parameter, we noticed that we also had to decrease the first parameter. After several trials, we propose the following guesses:
 ```{r}
-theta1.1 <- -3.8; theta2.1 <- 1.7; theta3.1 <- 2.2
+theta1.1 <- -3.75; theta2.1 <- 2; theta3.1 <- 2
 ret.1 <- MarkovChain(adjMatrix, gender, theta1.1, theta2.1, theta3.1)
 ret.1$statSim %>% colMeans
 ```
@@ -252,12 +261,19 @@ summary(fit.ergm)
 
 ```{r}
 theta1 <- coef(fit.ergm)[1]
+names(theta1) <- NULL
 theta2 <- coef(fit.ergm)[2]
+names(theta2) <- NULL
 exp(theta1 + theta2)/(1 + exp(theta1 + theta2))
 ```
+Therefore, the probability of observing a tie between students of the same gender is $27\%$. As the estimate of the second parameter is significantly greater than zero, we can state that having the same gender increases the probability of being friends. This is coherent with the following result, which is the probability of having a tie given that the nodes do not have the same gender:
+```{r}
+exp(theta1)/(1+exp(theta1))
+```
+
 
 (2)
-For (i) we should add the number of mutual edges, for (ii) the number of transitive two-path, considering decreasing weight of triangles to avoid near-degeneracy, for (iii) 
+For (i) we should add the number of mutual edges; for (ii) the number of transitive two-path, considering decreasing weight of triangles to avoid near-degeneracy; for (iii) we should add a term encoding for the out-degree distribution; for (iv) we should add a term encoding for the in-degree distribution. Also for the last two terms we consider adding a decay parameter.
 
 
 (3)
@@ -273,13 +289,17 @@ summary(fit.ergm2)
 mcmc.diagnostics(fit.ergm2)
 plot(fit.ergm2$sample)
 ```
+Adding the geometrically weighted parameters was necessary to reach convergence. Moreover, considering the results obtained by the function \texttt{mcmc.diagnostics}, we can conclude that the algorithm has reached convergence. In fact, the method of moments equation is fulfilled since the confidence interval include 0.
 
 
 (4)
+We use the \texttt{gof} function and consider criteria which were not taken into consideration while fitting the model.
 ```{r}
 gof.fit.ergm2 <- gof(fit.ergm2)
+gof.fit.ergm2
 plot(gof.fit.ergm2)
 ```
+Overall, the model is good. Considering the out-degree, there is only one value outside the $95\%$ confidence interval, and the same holds true for the in-degree. As regards the edge-wise shared partners statistics, only two values are outside the confidence interval, while for the minimum geodesic distance all the values are inside the confidence interval.
 
 ```{r}
 observed <- summary(friend_net ~ edges + mutual + nodematch('sex') + 
@@ -299,10 +319,18 @@ expected <- apply(simNetsStat, 2, mean)
 observed
 expected
 ```
+By simulating networks, the mean statistics are similar to the observed ones.
 
 
 (5)
-...
+Considering the summary, the estimated parameters are significant, except the fifth.
+The negative value for the edge parameter is coherent to what we expect for social networks (the network is sparse).
+\begin{itemize}
+\item The mutual parameter is positive and significant indicating that reciprocal ties are more likely. This supports the hypothesis (i), providing evidence for the presence of reciprocity in the data.
+\item The geometrically weighted edgewise shared partners parameter is positive and therefore, there is evidence for transitivity and hypothesis (ii) is also supported by the data.
+\item We do not have evidence to state that a tie is less likely between students when the sender has a higher out-degree. Therefore, we reject hypothesis (iii).
+\item the geometrically weighted in-degree is positive and significant, so there is evidence to say that a tie is more likely between students when the receiver has a higher in-degree and we do not reject hypothesis (iv).
+\end{itemize} 
 
 
 ## Task 4 
@@ -324,15 +352,20 @@ summary(fit.ergm3)
 
 ```{r}
 set.seed(1234)
-fit.ergm3 <- ergm(friend_net ~ nodematch('sex') + 
+fit.ergm3 <- ergm(friend_net ~ edges + nodematch('sex') + 
                     nodeofactor('sex') + 
                     nodeifactor('smoke') +
                     nodematch('activity'))
 summary(fit.ergm3)
 ```
+Without the structural terms, the \texttt{ergm} function uses MPLE, so the estimates are the same as in Task 1, but the p-values are different. In particular, now we only reject the hypothesis that smokers are more likely to receive friendship nominations than non-smokers. 
+
+On the other hand, if we add the structural terms, we get different estimates. In particular, the out-degree and in-degree distribution of the whole network can adequately explain the observed network, so \texttt{nodeofactor.sex.1} and \texttt{nodeifactor.smoke.1} are not significant. Specifically, the impact of the out-degree is not specific to the boys and the impact of the in-degree is not specific to smokers.
 
 
-```{r}
-summary(ergm(friend_net ~ edges + nodematch('sex')))
-```
-
+(2)
+We can test whether football players reciprocate friendship nominations they get from chess players. The mathematical formula would be the following:
+\begin{align*}
+\sum_{i,j} x_{ij}\cdot (1-x_{ji})\cdot \mathbb{I}(v_i==2)\cdot \mathbb{I}(v_j == 3),
+\end{align*}
+where $\mathbb{I}$ is the indicator function.
