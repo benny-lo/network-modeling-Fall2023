@@ -1,6 +1,10 @@
 ---
-title: "Assigment 1"
-author: "Francesco Freni"
+title: "Assignment 1 - Network Modeling"
+author: 
+- Lorenzo Benedetti
+- Francesco Freni
+- Aristotelis Koutris
+- Ruben Oliveira Rodrigues
 date: "`r Sys.Date()`"
 output:
   pdf_document: default
