@@ -1,10 +1,11 @@
 ---
 title: "Assignment 1 - Network Modeling"
+subtitle: "Group 5"
 author: 
-- Lorenzo Benedetti
-- Francesco Freni
-- Aristotelis Koutris
-- Ruben Oliveira Rodrigues
+- Lorenzo Benedetti (23-956-451)
+- Francesco Freni (23-955-248)
+- Aristotelis Koutris (23-942-683)
+- Ruben Oliveira Rodrigues (21-922-042)
 date: "`r Sys.Date()`"
 output:
   pdf_document: default
