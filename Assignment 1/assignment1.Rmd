@@ -204,7 +204,7 @@ MHstep <- function(net, nodeAttr, theta1, theta2, theta3){
   delta_1 = 1 - 2*net[i,j]
   
   # Reciprocal dyads
-  delta_2 = net[j,i] - 2 * net[i,j] * net[j,i]
+  delta_2 = (1 - 2 * net[i,j]) * net[j,i]
   # if (net[j,i] == 1 & net[i,j] == 1) delta_2 = -1
   # if (net[i,j] == 0 & net[j,i] == 1) delta_2 = 1
   # if (net[i,j] == 0 & net[j,i] == 0) delta_2 = 0
@@ -334,15 +334,19 @@ fit.ergm <- ergm(friend_net ~ edges + nodematch('sex'))
 summary(fit.ergm)
 ```
 
+Adding a tie between two nodes of the same gender increases both the edges and homophily statistics by 1. As a result the log-odds of a tie is equal to $θ_1 + θ_2$.\
+
 ```{r}
 theta1 <- coef(fit.ergm)[1]
 names(theta1) <- NULL
 theta2 <- coef(fit.ergm)[2]
 names(theta2) <- NULL
-exp(theta1 + theta2)/(1 + exp(theta1 + theta2))
+odds <- exp(theta1 + theta2)
+prob <- odds/(1 + odds)
+prob
 ```
 
-Therefore, the probability of observing a tie between students of the same gender is $27\%$. As the estimate of the second parameter is significantly greater than zero, we can state that having the same gender increases the probability of being friends. This is coherent with the following result, which is the probability of having a tie given that the nodes do not have the same gender:
+Therefore, the probability of observing a tie between students of the same gender is $27\%$. As the estimate of the second parameter is significantly greater than zero at a significance level $\alpha = 0.05$ , we can state that having the same gender increases the probability of being friends. This is coherent with the following result, which is the probability of having a tie given that the nodes do not have the same gender:
 
 ```{r}
 exp(theta1)/(1+exp(theta1))
@@ -366,9 +370,9 @@ mcmc.diagnostics(fit.ergm2)
 plot(fit.ergm2$sample)
 ```
 
-Adding the geometrically weighted parameters was necessary to reach convergence. Moreover, considering the results obtained by the function \texttt{mcmc.diagnostics}, we can conclude that the algorithm has reached convergence. In fact, the method of moments equation is fulfilled since the confidence interval include 0.
+Adding the geometrically weighted parameters was necessary to reach convergence. Moreover, considering the results obtained by the function \texttt{mcmc.diagnostics}, we can conclude that the algorithm has reached convergence. The MCMC is mixing well, since the difference between the observed and simulated statistics fluctuates around 0. Additionally, the probability distributions of the errors are centered around 0.
 
-(4) We use the \texttt{gof} function and consider criteria which were not taken into consideration while fitting the model.
+(4) We use the \texttt{gof} function and consider criteria and auxiliary statistics (e.g. minimum geodesic distance) which were not taken into consideration while fitting the model.
 
 ```{r}
 gof.fit.ergm2 <- gof(fit.ergm2)
@@ -376,7 +380,7 @@ gof.fit.ergm2
 plot(gof.fit.ergm2)
 ```
 
-Overall, the model is good. Considering the out-degree, there is only one value outside the $95\%$ confidence interval, and the same holds true for the in-degree. As regards the edge-wise shared partners statistics, only two values are outside the confidence interval, while for the minimum geodesic distance all the values are inside the confidence interval.
+Overall, the MCMC is good at modelling the auxiliary statistics. Considering the out-degree, there is only one value outside the $95\%$ confidence interval, and the same holds true for the in-degree. As for the edge-wise shared partners statistics, only two values are outside the confidence interval, while for the minimum geodesic distance all the values are inside the confidence interval.
 
 ```{r}
 observed <- summary(friend_net ~ edges + mutual + nodematch('sex') + 
@@ -397,16 +401,16 @@ observed
 expected
 ```
 
-By simulating networks, the mean statistics are similar to the observed ones.
+We notice that the simulated statistics are similar to the observed ones.
 
-(5) Considering the summary, the estimated parameters are significant, except the fifth. The negative value for the edge parameter is coherent to what we expect for social networks (the network is sparse).
+(5) Considering the summary, the estimated parameters are significant with $alpha = 0.05$, except the fifth. The negative value for the edge parameter is coherent to what we expect for social networks (the network is sparse).
 
     ```{=tex}
     \begin{itemize}
     \item The mutual parameter is positive and significant indicating that reciprocal ties are more likely. This supports the hypothesis (i), providing evidence for the presence of reciprocity in the data.
     \item The geometrically weighted edgewise shared partners parameter is positive and therefore, there is evidence for transitivity and hypothesis (ii) is also supported by the data.
     \item We do not have evidence to state that a tie is less likely between students when the sender has a higher out-degree. Therefore, we reject hypothesis (iii).
-    \item the geometrically weighted in-degree is positive and significant, so there is evidence to say that a tie is more likely between students when the receiver has a higher in-degree and we do not reject hypothesis (iv).
+    \item The geometrically weighted in-degree is positive and significant, so there is evidence to say that a tie is more likely between students when the receiver has a higher in-degree and we do not reject hypothesis (iv).
     \end{itemize}
     ```
 
