@@ -440,9 +440,10 @@ fit.ergm3 <- ergm(friend_net ~ edges + nodematch('sex') +
 summary(fit.ergm3)
 ```
 
-Without the structural terms, the \texttt{ergm} function uses MPLE, so the estimates are the same as in Task 1 (if we also include the edge parameter), but the p-values are different. In particular, now we only reject the hypothesis that smokers are more likely to receive friendship nominations than non-smokers.
+Without the structural terms, the \texttt{ergm} function uses MPLE, so the estimates are the same as in Task 1 (if we also include the edge parameter), but the p-values are different. In this case, we reject the hypothesis that smokers are more likely to receive friendship nominations than non-smokers given that\
+$alpha = 0.05$. On the other hand, we have evidence of homophily based on the type of activity. Finally, although the nodeofactor.sex parameter is statistically significant, its value is negative which indicates that boys are less likely, rather than more likely, to send friendship nominations. As a result, we reject the corresponding hypothesis.
 
-On the other hand, if we add the structural terms, we get different estimates. In particular, the out-degree and in-degree distribution of the whole network can adequately explain the observed network, so \texttt{nodeofactor.sex.1} and \texttt{nodeifactor.smoke.1} are not significant. Specifically, the impact of the out-degree is not specific to the boys and the impact of the in-degree is not specific to smokers.
+On the other hand, if we add the structural terms, we get different estimates. In particular, the out-degree and in-degree distribution of the whole network can adequately explain the observed network, so \texttt{nodeofactor.sex.1} and \texttt{nodeifactor.smoke.1} are found to be not significant. Specifically, the impact of the out-degree statistic is significant but the same cannot be said about the out-degree statistic of boys. Similarly, the in-degree statistic is significant, while the in-degree statistic of smokers is not.
 
 (2) We can test whether football players reciprocate friendship nominations they get from chess players. The mathematical formula would be the following: \begin{align*}
     \sum_{i,j} x_{ij}\cdot (1-x_{ji})\cdot \mathbb{I}(v_i==2)\cdot \mathbb{I}(v_j == 3),
