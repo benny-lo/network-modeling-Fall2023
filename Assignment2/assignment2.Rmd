@@ -16,6 +16,8 @@ header-includes:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(RSiena)
+library(sna)
+source('printSiena.R')
 ```
 
 
@@ -91,7 +93,7 @@ library(RSiena)
 
 \begin{align*}
  \resizebox{1\textwidth}{!}{$
-  \frac{exp(-1.5\times 2 + 2\times 1 + 1\times 0 + 1.5\times 0)}{exp(-1.5\times 1 + 2\times 0 + 1\times 0 + 1.5\times 0) + exp(-1.5\times 1 + 2\times 1 + 1\times 0 + 1.5\times 0) + exp(-1.5\times 3 + 2\times 1 + 1\times 0 + 1.5\times 1) + exp(-1.5\times 2 + 2\times 1 + 1\times 0 + 1.5\times 0)} = 0.1410792$}
+  \frac{exp(-1.5\times 2 + 2\times 1 + 1\times 0 + 1.5\times 0)}{exp(-1.5\times 1 + 2\times 0 + 1\times 0 + 1.5\times 0) + exp(-1.5\times 1 + 2\times 1 + 1\times 0 + 1.5\times 0) + exp(-1.5\times 3 + 2\times 1 + 1\times 1 + 1.5\times 1) + exp(-1.5\times 2 + 2\times 1 + 1\times 0 + 1.5\times 0)} = 0.1135525$}
 \end{align*}
 
 
@@ -192,7 +194,203 @@ model0 <- siena07(myAlgorithm,
 model0
 ```
 ```{r}
-model0$rate
-model0$theta
+(lambda <- model0$rate)
+(beta <- model0$theta)
 ```
+
+(3)
+```{r}
+set.seed(2023)
+nsim <- 1000
+triadCensus <- matrix(NA, nrow=nsim, ncol=16) # 16 types of triads
+for (i in 1:nsim) {
+  x2sim <- simulation(nrow(net1), net1, lambda, beta[1], beta[2], beta[3])
+  triadCensus[i,] <- triad.census(x2sim, mode = 'digraph')
+}
+```
+
+(4)
+```{r}
+## i. standardized the simulated network stats. ----
+##   Name the resulting object as triadCensusStd
+stdev <- apply(triadCensus, 2, sd)
+m <- apply(triadCensus, 2, mean)
+triadCensusStd <- sapply(1:length(m), function(x) (triadCensus[,x] - m[x])/stdev[x])
+
+## ii. variance-covariance matrix and its generalized inverse.         ----
+Phatinv <- MASS::ginv(cov(triadCensusStd))
+
+## iii. standardized the observed values of the triad census counts    ----
+##  in the second observation using values from i.
+net2std <- sapply(1:length(m), function(x) (triad.census(net2)[,x] - m[x])/stdev[x])
+names(net2std) <- 1:16
+
+## iv. Monte-Carlo Mahalanobis distance computation                                ----
+# Compute the Mahalanobis distance using the mhd function for 
+# the auxiliar statistics of the simulated networks and the observed network.
+# Remember to drop statistics with variance of 0 for the plot and
+# Mahalanobis distance computation, report which statistics suffer this issue.
+
+#' Compute the Mahalanobis distance
+#'
+#' @param auxStats numerical vector with the mean centered or standardized
+#'   auxiliar statistics
+#' @param invCov numerical matrix with the inverse of the variance-covariance
+#'   matrix of the auxiliar statistics in the simulated networks
+#'
+#' @return numeric value with the Mahalanobis distance of auxiliar stats
+#'
+#' @examples
+#' mhd(c(2, 4) - c(1.5, 2), solve(matrix(c(1, 0.8, 0.8, 1), ncol = 2)))
+mhd <- function(auxStats, invCov) {
+  t(auxStats) %*% invCov %*% auxStats
+}
+
+triadCensusStd <- triadCensusStd[,stdev>0]
+mhd_sim <- apply(triadCensusStd, 1, function(x) mhd(x, Phatinv))
+mhd_obs <- mhd(net2std, Phatinv)
+
+## v. Monte-Carlo p-value computation                                ----
+# Compute the proportion of simulated networks where the distance is 
+# equal or greater than the distance in the observed network.
+mean(mhd_sim >= mhd)
+
+# violin plots ------------------------------------------------------------
+# Fill out the missing part and run the code to obtain the violin plots
+
+# install.packages(c("tidyverse", "ggplot2"))  # # run this line to install 
+library(tidyverse)  # used: dplyr and tidyr
+library(ggplot2)
+
+# Given the array triadCensusStd, create a data frame from it in a long format, 
+# do the same for the observed network statistics at time t2.
+# Named the data frame "triadCensusDf" and "triadCensusObs".
+# Drops statistics with variance of 0 for the plot.
+
+triadCensusDf <- data.frame(triadCensusStd) |>
+  select(where(~ var(.) > 0)) |>  # Drop statistics with zero variance
+  pivot_longer(
+    everything(),
+    names_to = "triad", names_pattern = "^X(.+)$",
+    values_to = "nnodes"
+  )
+
+# Compute the statistics of the observed network at time t2,
+#  standardized using the stats from 2.4 literal i.
+triadCensusObs <- # ---MISSING--- |> 
+  data.frame(t(net2std)) |>
+  pivot_longer(
+    everything(),
+    names_to = "triad", names_pattern = "^X(.+)$",
+    values_to = "nnodes"
+  ) |>
+  filter(triad %in% unique(triadCensusDf$triad))
+
+# The following code computes the 5% and the 95% quantiles
+# of the triad counts by type
+percTriad <- triadCensusDf |>
+  group_by(triad) |>
+  summarise(
+    quant05 = quantile(nnodes, prob = 0.05),
+    quant95 = quantile(nnodes, prob = 0.95)
+  ) |>
+  pivot_longer(
+    starts_with("quant"),
+    names_to = "quant", names_pattern = "quant(.+)",
+    values_to = "nnodes"
+  )
+
+
+# The following code produces the violin plots
+ggplot(triadCensusDf, aes(fct_inorder(triad), nnodes)) +
+  geom_violin(trim = FALSE, scale = "width") +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  geom_boxplot(width = 0.2, fill = "gray", outlier.shape = 4) +
+  geom_point(data = triadCensusObs, col = "red", size = 2) +
+  geom_line(
+    data = triadCensusObs, aes(group = 1), col = "red", linewidth = 0.5
+  ) +
+  geom_line(
+    data = percTriad, mapping = aes(group = quant),
+    col = "gray", linetype = "dashed"
+  ) +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) +
+  xlab("triad type")
+
+```
+
+The p-value computed in (4) suggests that the model has a good fit. Considering the plot, \textcolor{red}{MISSING} observed values are outside the $95\%$ confidence intervals, but overall we conclude that the fit is decent. 
+
+
+## Task 3
+(1)
+(1.1)
+```{r}
+f1 <- as.matrix(read.csv("f1.csv", header = FALSE))
+f2 <- as.matrix(read.csv("f2.csv", header = FALSE))
+f3 <- as.matrix(read.csv("f3.csv", header = FALSE))
+attributes <- read.csv("demographic.csv", header = TRUE)
+logdistance <- as.matrix(read.csv("logdistance.csv", header = FALSE))
+alcohol <- as.matrix(read.csv('alcohol.csv', header = T))
+
+friendship <- sienaDependent(
+  array(c(f1, f2, f3), dim = c(129, 129, 3))
+)
+
+gender <- coCovar(attributes$gender)
+age <- coCovar(attributes$age)
+logdistance <- coDyadCovar(logdistance)
+alcohol <- varCovar(alcohol)
+
+mydata <- sienaDataCreate(friendship, gender, age, logdistance, alcohol)
+print01Report(mydata, modelname='Glasgow')
+```
+
+```{r}
+# Tie changes between subsequent observations:
+#  periods        0 =>  0   0 =>  1   1 =>  0   1 =>  1   Distance Jaccard   Missing
+#   1 ==>   2     15827       237       240       208       477     0.304         0 (0%)
+#   2 ==>   3     15839       228       209       236       437     0.351         0 (0%)
+```
+
+The Jaccard Index is above $0.3$ in both periods, so the data contains enough information to investigate the evolution of the friendship network.
+
+(1.2)
+```{r}
+myeff <- getEffects(mydata)
+myAlgorithm <- sienaAlgorithmCreate(
+  projname = "friends_res",
+  nsub = 4, n3 = 1000, seed = 1908
+)
+myeff <- includeEffects(myeff, transTrip)
+myeff <- includeEffects(myeff, inPop)
+myeff <- includeEffects(myeff, egoX, altX, simX, interaction1='alcohol')
+myeff <- includeEffects(myeff, X, interaction1='logdistance')
+```
+
+(1.3)
+```{r}
+modelEv <- siena07(
+  myAlgorithm,
+  data = mydata, effects = myeff,
+  returnDeps = TRUE,
+  useCluster = TRUE, nbrNodes = 4
+)
+modelEv
+```
+```{r}
+printSiena(modelEv)
+```
+
+The algorithm converged, because the absolute value of the maximum t-ratio of all the parameters is below $0.1$ and the overall maximum convergence ratio is below $0.2$. All the included parameters are significant, except for the control effects (alcohol ego and alcohol alter).
+The density parameter is negative, as we expected from a social network (sparse network). The positive reciprocity parameter suggests that an actor tends to reciprocate a friendship nomination. The negative logdistance parameter suggests that there is a negative correlation between distance between students and tendency to form a tie.
+The positive indegree polutarity suggests that there is a tendency to nominate as a friend a popular student (high in-degree). 
+The positive alcohol similarity effect suggests that students with similar alcohol consumption tend to be friends.
 
