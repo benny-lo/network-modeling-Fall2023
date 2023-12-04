@@ -1,12 +1,12 @@
 							************************
-									 Glasgow.txt
+									 Glasgowbeh.txt
 							************************
 
-Filename is Glasgow.txt.
+Filename is Glasgowbeh.txt.
 
-This file contains primary output for SIENA project <<Glasgow>>.
+This file contains primary output for SIENA project <<Glasgowbeh>>.
 
-Date and time: 04/12/2023 6:06:42 PM 
+Date and time: 04/12/2023 6:21:07 PM 
 
 RSiena version 1.4.1 (01 11 2023)
 
@@ -19,10 +19,10 @@ Data input.
 129 actors,
 1 dependent network variables,
 0 dependent bipartite variables,
-0 dependent discrete behavior variables,
+1 dependent discrete behavior variables,
 0 dependent continuous behavior variables,
 2 constant actor covariates,
-1 exogenous changing actor covariates,
+0 exogenous changing actor covariates,
 1 constant dyadic covariates,
 0 exogenous changing dyadic covariates,
 0 no files with times of composition change.
@@ -139,6 +139,25 @@ No missing data for observation 3.
 
 
 
+
+@2
+Reading dependent actor variables.
+----------------------------------
+
+1st dependent actor variable named alcoholbeh.
+Maximum and minimum rounded values are 0 and 5.
+
+
+A total of 1 dependent actor variable.
+
+Number of missing cases per observation:
+ observation         1         2         3		overall
+alcoholbeh           0         0         0         0	  ( 0.0 %)
+
+Means per observation:
+ observation         1         2         3		overall
+alcoholbeh         2.465     2.690     3.140     2.765
+
 @2
 Reading constant actor covariates.
 ----------------------------------
@@ -158,30 +177,6 @@ Information about covariates:
 gender          1.0     2.0      1.434    Y 
 age            12.8    14.3     13.318    Y 
 The mean values are subtracted from the covariates.
-
-
-@2
-Reading exogenous changing actor covariates.
---------------------------------------------
-
-1 variable, named:
-alcohol         
-
-A total of 1 exogenous changing actor covariate.
-
-Number of missing cases per period:
- period                    1       2     overall
-alcohol                    0       0        0 	   ( 0.0 %)
-
-Information about changing covariates:
-
-              minimum  maximum	  mean  centered 
-alcohol                                    Y 
-	period   1     0.0     5.0      2.465 
-	period   2     0.0     5.0      2.690 
-Overall                            2.578 
-
-The mean value is subtracted from the centered covariate.
 
 
 @2
@@ -211,7 +206,7 @@ the mean is subtracted.
 These means are:
 Similarity gender                   :       0.5048 
 Similarity age                      :       0.7717 
-Similarity alcohol                  :       0.7419 
+Similarity alcoholbeh               :       0.7419 
 
 
 
@@ -254,4 +249,38 @@ constant friendship rate (period 1)     7.4542
 constant friendship rate (period 2)     6.8293 
 outdegree (density)                               -1.6130 
 
-Initialisation of project <<Glasgow>> executed succesfully.
+
+
+@2
+Dependent discrete actor variables:
+-----------------------------------
+
+alcoholbeh 
+
+
+@3
+Marginal distribution
+                     
+                Observations
+values               1     2     3
+                ------------------
+  0                  1     1     0
+  1                 23    23     9
+  2                 51    36    28
+  3                 28    35    39
+  4                 21    23    42
+  5                  5    11    11
+No missings
+
+
+
+@3
+Changes
+       
+ periods    actors:  down   up   constant  missing  ;   steps:   down    up  total
+  1  =>  2            22    42      65         0                   26    55    81
+  2  =>  3            18    56      55         0                   22    80   102
+
+For this variable, the standard initial behavioral tendency parameter is   0.3470
+
+Initialisation of project <<Glasgowbeh>> executed succesfully.
