@@ -1,10 +1,12 @@
-starting worker pid=20936 on localhost:11636 at 18:33:42.763
-starting worker pid=1592 on localhost:11636 at 18:33:43.101
-starting worker pid=1172 on localhost:11636 at 18:33:43.499
-starting worker pid=28684 on localhost:11636 at 18:33:43.897
+starting worker pid=17520 on localhost:11791 at 21:22:35.075
+starting worker pid=23880 on localhost:11791 at 21:22:35.079
+starting worker pid=6836 on localhost:11791 at 21:22:35.100
+starting worker pid=19340 on localhost:11791 at 21:22:35.102
 Warning message:
 package 'RSiena' was built under R version 4.3.2 
 Warning message:
 package 'RSiena' was built under R version 4.3.2 
+Warning message:
 package 'RSiena' was built under R version 4.3.2 
+Warning message:
 package 'RSiena' was built under R version 4.3.2 

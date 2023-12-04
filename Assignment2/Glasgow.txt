@@ -6,7 +6,7 @@ Filename is Glasgow.txt.
 
 This file contains primary output for SIENA project <<Glasgow>>.
 
-Date and time: 04/12/2023 6:06:42 PM 
+Date and time: 04/12/2023 9:17:40 PM 
 
 RSiena version 1.4.1 (01 11 2023)
 

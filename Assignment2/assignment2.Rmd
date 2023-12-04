@@ -249,12 +249,12 @@ mhd <- function(auxStats, invCov) {
 
 triadCensusStd <- triadCensusStd[,stdev>0]
 mhd_sim <- apply(triadCensusStd, 1, function(x) mhd(x, Phatinv))
-mhd_obs <- mhd(net2std, Phatinv)
+mhd_obs <- as.numeric(mhd(net2std, Phatinv))
 
 ## v. Monte-Carlo p-value computation                                ----
 # Compute the proportion of simulated networks where the distance is 
 # equal or greater than the distance in the observed network.
-mean(mhd_sim >= mhd)
+mean(mhd_sim >= mhd_obs)
 
 # violin plots ------------------------------------------------------------
 # Fill out the missing part and run the code to obtain the violin plots
@@ -327,7 +327,7 @@ ggplot(triadCensusDf, aes(fct_inorder(triad), nnodes)) +
 
 ```
 
-The p-value computed in (4) suggests that the model has a good fit. Considering the plot, \textcolor{red}{MISSING} observed values are outside the $95\%$ confidence intervals, but overall we conclude that the fit is decent. 
+The p-value computed in (4) suggests that the model has a good fit. Considering the plot, $3$ observed values are outside the $95\%$ confidence intervals, but overall we conclude that the fit is decent. 
 
 
 ## Task 3
