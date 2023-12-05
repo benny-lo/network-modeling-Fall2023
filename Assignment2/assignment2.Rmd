@@ -143,27 +143,20 @@ simulation <- function(n, x1, lambda, beta1, beta2, beta3) {
     delta_outdegree <- rep(0, n)
     delta_rec <- rep(0, n)
     delta_trans_trip <- rep(0, n)
+    
     for (j in (1:n)) {
       if (j==i) next
+      
       delta_outdegree[j] <- 1 - 2*x[i,j]
       delta_rec[j] <- (1 - x[i,j])*x[j,i] - x[i,j]*x[j,i]
-      #if ((x[i,j]==1) & (x[j,i]==1)) {
-      #  delta_rec[j] <- -1
-      #} else if (x[j,i] == 1) {
-      #  delta_rec[j] <- 1
-      #}
-      for (h in 1:n) {
-        delta_trans_trip[j] <- delta_trans_trip[j] + (1-x[i,j])*x[i,h]*x[h,j] -
-          x[i,j]*x[i,h]*x[h,j]
-        delta_trans_trip[j] <- delta_trans_trip[j] + x[i,h]*(1-x[i,j])*x[j,h] -
-          x[i,h]*x[i,j]*x[j,h]
-      }
+      delta_trans_trip[j] <- (1 - 2*x[i,j]) * x[i,] %*% (x[,j] + x[j,])
     }
+    
     p <- exp(beta1 * delta_outdegree + beta2 * delta_rec + beta3 * delta_trans_trip) /
       sum(exp(beta1 * delta_outdegree + beta2 * delta_rec + beta3 * delta_trans_trip))
     j <- which.max(rmultinom(1, 1, prob = p))
     if (i != j) x[i,j] <- 1 - x[i,j]
-    t <- t + dt
+    t <- t+dt
   }
   return(x)
 }
