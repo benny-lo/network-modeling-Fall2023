@@ -6,7 +6,7 @@ Filename is Glasgowbeh.txt.
 
 This file contains primary output for SIENA project <<Glasgowbeh>>.
 
-Date and time: 04/12/2023 9:22:33 PM 
+Date and time: 05/12/2023 3:07:13 PM 
 
 RSiena version 1.4.1 (01 11 2023)
 

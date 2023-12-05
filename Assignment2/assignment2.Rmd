@@ -320,7 +320,7 @@ ggplot(triadCensusDf, aes(fct_inorder(triad), nnodes)) +
 
 ```
 
-The p-value computed in (4) suggests that the model has a good fit. Considering the plot, $3$ observed values are outside the $95\%$ confidence intervals, but overall we conclude that the fit is decent. 
+The p-value computed in (4) suggests that the model has a bad fit, because it is below $0.05$. Considering the plot, $3$ observed values are outside the $95\%$ confidence intervals. 
 
 
 ## Task 3
@@ -363,7 +363,7 @@ myAlgorithm <- sienaAlgorithmCreate(
   projname = "friends_res",
   nsub = 4, n3 = 3000, seed = 2023
 )
-myeff <- includeEffects(myeff, transTrip, cycle3)
+myeff <- includeEffects(myeff, transTrip)
 myeff <- includeEffects(myeff, inPop)
 myeff <- includeEffects(myeff, egoX, altX, simX, interaction1='alcohol')
 myeff <- includeEffects(myeff, X, interaction1='logdistance')
@@ -456,7 +456,7 @@ The negative indegree popularity suggests that there is a tendency to nominate a
 The positive alcohol similarity effect suggests that students with similar alcohol consumption tend to be friends.
 
 (1.4)
-The first hypothesis is supported by data, so we can say that students tend to be friends with popular pupils. The second hypothesis is also supported by data, so we can say that students tend to be friends with pupils with similar alcohol consumption to their own. Since the estimate of the coefficient related to the logdistance is significant and negative, we can say the smaller the distance, the more likely the students are to be friends, so we do not have evidence to reject hypothesis 3.
+The first hypothesis is not supported by data, because the parameter related to indegree popularity is negative. The second hypothesis is also supported by data, so we can say that students tend to be friends with pupils with similar alcohol consumption to their own. Since the estimate of the coefficient related to the logdistance is significant and negative, we can say the smaller the distance, the more likely the students are to be friends, so we do not have evidence to reject hypothesis 3.
 
 (2)
 (2.1)
@@ -478,7 +478,7 @@ We can see that there is positive autocorrelation between the friendship ties an
 
 ```{r, cache=TRUE}
 myeff <- getEffects(mydata)
-myeff <- includeEffects(myeff, transTrip, cycle3)
+myeff <- includeEffects(myeff, transTrip)
 myeff <- includeEffects(myeff, inPop)
 myeff <- includeEffects(myeff, egoX, altX, simX, interaction1='alcoholbeh')
 myeff <- includeEffects(myeff, X, interaction1='logdistance')
@@ -563,11 +563,11 @@ printSienaCoev(modelCoev)
 The estimates of the parameters shared with the previous models lead to the same conclusions. The non-significant parameter for linear shape suggests that there is no tendency to either decrease or increase alcohol consumption in general. The non-significant parameter for quadratic shape suggests that there is no tendency to form a U or inverse U shape over time. The significant positive parameter for alcoholbeh similarity suggests that students are more likely to form friendship ties to students with similar drinking habits. The significant positive parameter for alcoholbeh average similarity suggests that students adjust their alcohol consumption to that of their friends. There is no evidence that popular students tend to increase or maintain their level of alcohol consumption.
 
 (2.3)
-The fourth hypothesis is not supported by the data because the coefficient related to alcoholbeh indegree is not significant. The fifth hypothesis is supported by the data, so we can say that students tend to adjust their alcohol consumption to that of their friends. The conclusions about the hypotheses in (1) do not change. It should be noted that the significance of the parameter related to the second hypothesis (alcoholbeh similarity) has decreased with the introduction of the behavioral part, but it remains significant.
-
+The fourth hypothesis is not supported by the data because the coefficient related to alcoholbeh indegree is not significant. The fifth hypothesis is supported by the data, so we can say that students tend to adjust their alcohol consumption to that of their friends. The conclusions about the hypotheses in (1) do not change.
 
 (2.4)
 We have evidence for both selection and influence processes. As an example, hypothesis $2$ is related to the selection process and we found evidence to support it. Similarly, hypothesis $5$ is related to an influence process (students adjusting their drinking behavior) and we found evidence to support it.
+
 
 (3)
 Since the outdegree distribution is not well represented by the model, comparing the outdegree distribution in the observed network to the one in the simulated networks, the first results to be more skewed, so it may be necessary to let the rate function depend on the outdegrees, as specified in the RSiena manual. As regards the geodesic distances, in the simulated networks they are too large compared to the observed network. Hence, we might consider adding the gwesp effect, which is an alternative expression for transitivity. By doing so, we can potentially increase transitivity and thus shorten the distance between nodes.
