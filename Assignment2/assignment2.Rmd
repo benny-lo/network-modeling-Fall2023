@@ -170,7 +170,7 @@ simulation <- function(n, x1, lambda, beta1, beta2, beta3) {
       if (j==i) next
       
       delta_outdegree[j] <- 1 - 2*x[i,j]
-      delta_rec[j] <- (1 - x[i,j])*x[j,i] - x[i,j]*x[j,i]
+      delta_rec[j] <- (1 - 2*x[i,j])*x[j,i]
       delta_trans_trip[j] <- (1 - 2*x[i,j]) * x[i,] %*% (x[,j] + x[j,])
     }
     
@@ -183,6 +183,13 @@ simulation <- function(n, x1, lambda, beta1, beta2, beta3) {
   return(x)
 }
 ```
+Assuming the tie $i \rightarrow j$ is toggled, only one value in the adjacency matrix is going to change: $x[i, j]$ becomes $1 - x[i, j]$. 
+
+**Change in outdegree**: The outdegree of node $i$ is the sum of the elements of the $i$th row of the adjacency matrix and the only term of the sum that changes is $x[i,j]$. It follows that the delta of the outdegree is $(1 - x[i,j]) - x[i,j] = 1 - 2x[i,j]$. 
+
+**Change in reciprocated pairs**: The number of reciprocated pairs is given by $\sum_{a< b}x[a,b] \cdot x[b,a]$: the only term that changes by toggling edge $i \rightarrow j$ corresponds to $\{a ,b \} = \{ i, j \}$. Therefore, the delta of the number of reciprocated pairs is $(1 - x[i, j]) \cdot x[j,i] - x[i,j] \cdot x[j,i] = (1 - 2x[i,j]) \cdot x[j,i]$.
+
+**Change in transitive triplets**: The number of transitive reciprocated triplets is given by $\sum_{a, b, c} x[a, c] \cdot x[c, b] \cdot x[a, b]$. There are two type of terms that change by toggling edge $i \rightarrwo j$: those of the form $x[i, j] \cdot x[j,h] \cdot x[i, h]$, i.e. the added/removed edge adds/removes a $2$-path; those of the form $x[i, h] \cdot x[h, j] \cdot x[i, j]$, ie.e the added/removed edge closes/opens a $2$-path. Therefore, the total delta is given by $$\sum_{h} (1 - 2x[i,j]) \cdot x[j,h] \cdot x[i, h] + \sum_{h} x[i, h] \cdot x[h, j] \cdot (1 - 2x[i, j]) = \\ (1-2x[i,j]) \sum_{h}x[i,h] \cdot (x[j, h] + x[h, j])$$.
 
 (2) 
 
