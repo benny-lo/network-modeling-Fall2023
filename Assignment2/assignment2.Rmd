@@ -189,7 +189,7 @@ Assuming the tie $i \rightarrow j$ is toggled, only one value in the adjacency m
 
 **Change in reciprocated pairs**: The number of reciprocated pairs is given by $\sum_{a< b}x[a,b] \cdot x[b,a]$: the only term that changes by toggling edge $i \rightarrow j$ corresponds to $\{a ,b \} = \{ i, j \}$. Therefore, the delta of the number of reciprocated pairs is $(1 - x[i, j]) \cdot x[j,i] - x[i,j] \cdot x[j,i] = (1 - 2x[i,j]) \cdot x[j,i]$.
 
-**Change in transitive triplets**: The number of transitive reciprocated triplets is given by $\sum_{a, b, c} x[a, c] \cdot x[c, b] \cdot x[a, b]$. There are two type of terms that change by toggling edge $i \rightarrwo j$: those of the form $x[i, j] \cdot x[j,h] \cdot x[i, h]$, i.e. the added/removed edge adds/removes a $2$-path; those of the form $x[i, h] \cdot x[h, j] \cdot x[i, j]$, i.e. the added/removed edge closes/opens a $2$-path. Therefore, the total delta is given by $$\sum_{h} (1 - 2x[i,j]) \cdot x[j,h] \cdot x[i, h] + \sum_{h} x[i, h] \cdot x[h, j] \cdot (1 - 2x[i, j]) = \\ (1-2x[i,j]) \sum_{h}x[i,h] \cdot (x[j, h] + x[h, j])$$.
+**Change in transitive triplets**: The number of transitive reciprocated triplets is given by $\sum_{a, b, c} x[a, c] \cdot x[c, b] \cdot x[a, b]$. There are two type of terms that change by toggling edge $i \rightarrow j$: those of the form $x[i, j] \cdot x[j,h] \cdot x[i, h]$, i.e. the added/removed edge adds/removes a $2$-path; those of the form $x[i, h] \cdot x[h, j] \cdot x[i, j]$, i.e. the added/removed edge closes/opens a $2$-path. Therefore, the total delta is given by $$\sum_{h} (1 - 2x[i,j]) \cdot x[j,h] \cdot x[i, h] + \sum_{h} x[i, h] \cdot x[h, j] \cdot (1 - 2x[i, j]) = \\ (1-2x[i,j]) \sum_{h}x[i,h] \cdot (x[j, h] + x[h, j])$$.
 
 (2) 
 

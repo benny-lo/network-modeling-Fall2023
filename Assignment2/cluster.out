@@ -1,36 +1,8 @@
-starting worker pid=7240 on localhost:11529 at 15:07:31.384
-starting worker pid=3992 on localhost:11529 at 15:07:31.648
-starting worker pid=8368 on localhost:11529 at 15:07:31.911
-starting worker pid=23412 on localhost:11529 at 15:07:32.080
-starting worker pid=27012 on localhost:11529 at 15:07:48.428
-starting worker pid=25268 on localhost:11529 at 15:07:48.613
-starting worker pid=4132 on localhost:11529 at 15:07:48.788
-starting worker pid=28144 on localhost:11529 at 15:07:48.979
-Error in unserialize(node$con) : error reading from connection
-Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
-In addition: Warning message:
-package 'RSiena' was built under R version 4.3.2 
-Execution halted
-Error in unserialize(node$con) : error reading from connection
-Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
-In addition: Warning message:
-package 'RSiena' was built under R version 4.3.2 
-Execution halted
-Error in unserialize(node$con) : error reading from connection
-Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
-In addition: Warning message:
-package 'RSiena' was built under R version 4.3.2 
-Execution halted
-Error in unserialize(node$con) : error reading from connection
-Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
-In addition: Warning message:
-package 'RSiena' was built under R version 4.3.2 
-Execution halted
+starting worker pid=29652 on localhost:11137 at 18:05:24.210
+starting worker pid=19116 on localhost:11137 at 18:05:24.387
+starting worker pid=2140 on localhost:11137 at 18:05:24.621
+starting worker pid=18480 on localhost:11137 at 18:05:24.791
+Warning message:
 Warning message:
 package 'RSiena' was built under R version 4.3.2 
-Warning message:
-package 'RSiena' was built under R version 4.3.2 
-Warning message:
-package 'RSiena' was built under R version 4.3.2 
-Warning message:
 package 'RSiena' was built under R version 4.3.2 
